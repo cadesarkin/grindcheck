@@ -22,10 +22,13 @@ struct MainTabView: View {
                     .tag(3)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
+            .ignoresSafeArea()
 
             // Custom tab bar
             customTabBar
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea()
         .preferredColorScheme(.dark)
         .onAppear {}
     }
