@@ -28,25 +28,6 @@ workflows:
           cd $CM_BUILD_DIR
           xcodegen generate
 
-      - name: Set up code signing
-        script: |
-          keychain initialize
-
-      - name: Fetch signing certificates
-        script: |
-          app-store-connect fetch-signing-files \
-            $BUNDLE_ID \
-            --type IOS_APP_STORE \
-            --create
-
-      - name: Set up keychain
-        script: |
-          keychain add-certificates
-
-      - name: Update project settings
-        script: |
-          xcode-project use-profiles
-
       - name: Increment build number
         script: |
           cd $CM_BUILD_DIR
@@ -110,22 +91,6 @@ workflows:
         script: |
           cd $CM_BUILD_DIR
           xcodegen generate
-
-      - name: Set up code signing
-        script: keychain initialize
-
-      - name: Fetch signing certificates
-        script: |
-          app-store-connect fetch-signing-files \
-            $BUNDLE_ID \
-            --type IOS_APP_DEVELOPMENT \
-            --create
-
-      - name: Set up keychain
-        script: keychain add-certificates
-
-      - name: Update project settings
-        script: xcode-project use-profiles
 
       - name: Build
         script: |
