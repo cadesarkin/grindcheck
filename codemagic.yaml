@@ -3,9 +3,6 @@ workflows:
     name: GrindCheck → TestFlight
     max_build_duration: 60
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.grindcheck.app
       vars:
         XCODE_SCHEME: GrindCheck
         BUNDLE_ID: com.grindcheck.app
@@ -27,6 +24,26 @@ workflows:
         script: |
           cd $CM_BUILD_DIR
           xcodegen generate
+
+      - name: Initialize keychain
+        script: |
+          keychain initialize
+
+      - name: Create or fetch signing certificate and profile
+        script: |
+          app-store-connect fetch-signing-files \
+            $BUNDLE_ID \
+            --type IOS_APP_STORE \
+            --certificate-key $(echo $APP_STORE_CONNECT_PRIVATE_KEY) \
+            --create
+
+      - name: Add certificates to keychain
+        script: |
+          keychain add-certificates
+
+      - name: Apply provisioning profiles to project
+        script: |
+          xcode-project use-profiles
 
       - name: Increment build number
         script: |
@@ -70,9 +87,6 @@ workflows:
     name: GrindCheck → Development Build
     max_build_duration: 45
     environment:
-      ios_signing:
-        distribution_type: development
-        bundle_identifier: com.grindcheck.app
       vars:
         XCODE_SCHEME: GrindCheck
         BUNDLE_ID: com.grindcheck.app
@@ -91,6 +105,23 @@ workflows:
         script: |
           cd $CM_BUILD_DIR
           xcodegen generate
+
+      - name: Initialize keychain
+        script: keychain initialize
+
+      - name: Create or fetch signing certificate and profile
+        script: |
+          app-store-connect fetch-signing-files \
+            $BUNDLE_ID \
+            --type IOS_APP_DEVELOPMENT \
+            --certificate-key $(echo $APP_STORE_CONNECT_PRIVATE_KEY) \
+            --create
+
+      - name: Add certificates to keychain
+        script: keychain add-certificates
+
+      - name: Apply provisioning profiles to project
+        script: xcode-project use-profiles
 
       - name: Build
         script: |
