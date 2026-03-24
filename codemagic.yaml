@@ -77,7 +77,7 @@ workflows:
 
     publishing:
       app_store_connect:
-        api_key: GrindCheck Key
+        api_key: "GrindCheck Key"
         submit_to_testflight: true
         beta_groups:
           - "Internal Testers"
