@@ -27,12 +27,7 @@ struct MainTabView: View {
             customTabBar
         }
         .preferredColorScheme(.dark)
-        .onAppear {
-            if let context = try? taskStore.tasks.isEmpty ? nil : nil {
-                // context setup happens in GrindCheckApp
-                _ = context
-            }
-        }
+        .onAppear {}
     }
 
     private var customTabBar: some View {

@@ -96,7 +96,7 @@ final class StoreKitService: ObservableObject {
     private func listenForTransactions() -> Task<Void, Error> {
         Task.detached {
             for await result in Transaction.updates {
-                if let transaction = try? self.checkVerified(result) {
+                if let transaction = try? await MainActor.run(body: { try self.checkVerified(result) }) {
                     await transaction.finish()
                     await self.updateSubscriptionStatus()
                 }
