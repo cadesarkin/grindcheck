@@ -42,6 +42,7 @@ targets:
         CODE_SIGN_STYLE: Manual
         DEVELOPMENT_TEAM: $(TEAM_ID)
         PROVISIONING_PROFILE_SPECIFIER: $(PROVISIONING_PROFILE_SPECIFIER)
+        TARGETED_DEVICE_FAMILY: "1"
       configs:
         Release:
           CODE_SIGN_IDENTITY: "iPhone Distribution"
