@@ -34,7 +34,9 @@ workflows:
           app-store-connect fetch-signing-files \
             $BUNDLE_ID \
             --type IOS_APP_STORE \
-            --certificate-key $(echo $APP_STORE_CONNECT_PRIVATE_KEY) \
+            --issuer-id $APP_STORE_CONNECT_ISSUER_ID \
+            --key-id $APP_STORE_CONNECT_KEY_IDENTIFIER \
+            --private-key @env:APP_STORE_CONNECT_PRIVATE_KEY \
             --create
 
       - name: Add certificates to keychain
@@ -114,7 +116,9 @@ workflows:
           app-store-connect fetch-signing-files \
             $BUNDLE_ID \
             --type IOS_APP_DEVELOPMENT \
-            --certificate-key $(echo $APP_STORE_CONNECT_PRIVATE_KEY) \
+            --issuer-id $APP_STORE_CONNECT_ISSUER_ID \
+            --key-id $APP_STORE_CONNECT_KEY_IDENTIFIER \
+            --private-key @env:APP_STORE_CONNECT_PRIVATE_KEY \
             --create
 
       - name: Add certificates to keychain
