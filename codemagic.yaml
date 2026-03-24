@@ -1,0 +1,148 @@
+workflows:
+  ios-testflight:
+    name: GrindCheck → TestFlight
+    max_build_duration: 60
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.grindcheck.app
+      vars:
+        XCODE_SCHEME: GrindCheck
+        BUNDLE_ID: com.grindcheck.app
+        APP_STORE_APPLE_ID: 1234567890  # ← Replace with your App Store Connect app ID
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - name: Install XcodeGen
+        script: |
+          brew install xcodegen
+
+      - name: Generate Xcode project
+        script: |
+          cd $CM_BUILD_DIR
+          xcodegen generate
+
+      - name: Set up code signing
+        script: |
+          keychain initialize
+
+      - name: Fetch signing certificates
+        script: |
+          app-store-connect fetch-signing-files \
+            $BUNDLE_ID \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Set up keychain
+        script: |
+          keychain add-certificates
+
+      - name: Update project settings
+        script: |
+          xcode-project use-profiles
+
+      - name: Increment build number
+        script: |
+          cd $CM_BUILD_DIR
+          LATEST_BUILD=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID")
+          agvtool new-version -all $(($LATEST_BUILD + 1))
+
+      - name: Build and archive
+        script: |
+          cd $CM_BUILD_DIR
+          xcodebuild \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath "$CM_BUILD_DIR/build/GrindCheck.xcarchive" \
+            archive \
+            | xcpretty --color
+
+      - name: Export IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/GrindCheck.xcodeproj" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY       # Set in Codemagic environment
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER     # Set in Codemagic environment
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID       # Set in Codemagic environment
+        submit_to_testflight: true
+        beta_groups:
+          - "Internal Testers"
+        submit_to_app_store: false
+
+  ios-dev:
+    name: GrindCheck → Development Build
+    max_build_duration: 45
+    environment:
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.grindcheck.app
+      vars:
+        XCODE_SCHEME: GrindCheck
+        BUNDLE_ID: com.grindcheck.app
+      xcode: latest
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: develop
+          include: true
+    scripts:
+      - name: Install XcodeGen
+        script: brew install xcodegen
+
+      - name: Generate Xcode project
+        script: |
+          cd $CM_BUILD_DIR
+          xcodegen generate
+
+      - name: Set up code signing
+        script: keychain initialize
+
+      - name: Fetch signing certificates
+        script: |
+          app-store-connect fetch-signing-files \
+            $BUNDLE_ID \
+            --type IOS_APP_DEVELOPMENT \
+            --create
+
+      - name: Set up keychain
+        script: keychain add-certificates
+
+      - name: Update project settings
+        script: xcode-project use-profiles
+
+      - name: Build
+        script: |
+          cd $CM_BUILD_DIR
+          xcodebuild \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Debug \
+            -sdk iphoneos \
+            -archivePath "$CM_BUILD_DIR/build/GrindCheck-dev.xcarchive" \
+            archive \
+            | xcpretty --color
+
+      - name: Export IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/GrindCheck.xcodeproj" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
